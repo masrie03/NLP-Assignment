@@ -1,0 +1,49 @@
+ # ====================================
+# Python Caches & Compiled Files
+# ====================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ====================================
+# Virtual Environments
+# ====================================
+venv/
+env/
+ENV/
+.venv/
+
+# ====================================
+# IDE / Editor Files
+# ====================================
+.vscode/
+.idea/
+*.swp
+
+# ====================================
+# Jupyter Notebook Checkpoints
+# ====================================
+.ipynb_checkpoints/
+
+# ====================================
+# NLP Datasets & Model Checkpoints
+# ====================================
+# Heavy model files (Word2Vec, SpaCy, HuggingFace, etc.)
+*.bin
+*.pt
+*.pth
+*.onnx
+*.pkl
+*.joblib
+*.h5
+
+# Downloaded NLTK data or raw text corpora
+nltk_data/
+*.zip
+*.tar.gz
+
+# ====================================
+# Environment Variables & Secrets
+# ====================================
+.env
