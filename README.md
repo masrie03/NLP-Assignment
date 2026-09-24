@@ -1,80 +1,86 @@
-# arXiv Spelling Correction System — Partie A (CT052-3-M-NLP)
+#  LLM Guardrail & Prompt Injection Classifier
 
-Système probabiliste et contextuel de correction orthographique, entraîné sur
-le corpus **arXiv Paper Abstracts** (51 774 papers, ~9,7 millions de mots
-après nettoyage, 32 498 mots uniques retenus).
+This repository contains the implementation for **Section 2: Text Classification Model Building & Deployment**. The project implements an active **AI Security Firewall** that analyzes user prompts in real time to detect and block **Prompt Injections** and **Jailbreak Attacks** targeting Large Language Models.
 
-## Structure du projet
+---
 
-```
-spellcheck_project/
-├── data/
-│   └── raw/
-│       └── arxiv_data.csv        # Corpus brut (titles, summaries, terms)
-├── models/
-│   ├── unigrams.pkl               # dict[str, int]           mot -> fréquence
-│   └── bigrams.pkl                # dict[str, dict[str,int]] w1 -> {w2: freq}
+##  Project Structure
+
+```text
+LLM Prompt Injector Detection/
+│
 ├── src/
-│   ├── preprocessing.py           # Étape 1 : nettoyage + construction dictionnaires
-│   ├── nlp_engine.py               # Étape 2 : Levenshtein + détection Non-word/Real-word
-│   └── gui_app.py                  # Étape 3 : interface Tkinter
-└── README.md
+│   └── text_classifier/                # Part 2: Prompt Injection Classifier
+│       ├── data/
+│       │   └── prompt_injection_dataset.csv  # Downloaded HuggingFace dataset
+│       ├── models/
+│       │   ├── model.pkl               # Exported best-performing model
+│       │   └── tfidf_vectorizer.pkl     # Exported TF-IDF vectorizer
+│       ├── download_data.py            # Script to download dataset automatically
+│       ├── text_classification.ipynb   # EDA, Training, Cross-Validation & Tuning
+│       └── app.py                      # Streamlit deployment web app
+│
+├── requirements.txt                    # Python dependencies
+└── README.md                           # Documentation & execution instructions
+
 ```
 
-## Comment exécuter
+---
 
-### 1. Installer les dépendances
+##  Setup Instructions
+
+### 1. Prerequisites
+
+Ensure you have **Python 3.9** or higher installed on your system.
+
+### 2. Environment Setup & Dependencies Installation
+
+Open your terminal or PowerShell in the root directory of this project and run:
+
 ```bash
-pip install pandas
-```
-(`tkinter` et `pickle` sont inclus dans la bibliothèque standard de Python.)
+pip install -r requirements.txt
 
-### 2. (Re)générer les dictionnaires à partir du corpus brut
+```
+
+---
+
+##  How to Run the Application
+
+### Option A: Launch the Streamlit Web Application directly (Pre-trained)
+
+The pre-trained model artifacts (`model.pkl` and `tfidf_vectorizer.pkl`) are included in `src/text_classifier/models/`. You can immediately start the Streamlit firewall application using:
+
 ```bash
-cd src
-python preprocessing.py
-```
-Cela régénère `models/unigrams.pkl` et `models/bigrams.pkl`. **Cette étape n'a
-besoin d'être relancée que si tu modifies le corpus brut ou les règles de
-nettoyage** — l'application GUI charge directement les fichiers `.pkl` pour
-un démarrage instantané.
+python -m streamlit run src/text_classifier/app.py
 
-### 3. Lancer l'interface graphique
+```
+
+> **Note:** Executing via `python -m streamlit` ensures Streamlit runs using the correct active Python environment across Windows, macOS, and Linux.
+
+---
+
+### Option B: Re-downloading Data & Training Models from Scratch (Optional)
+
+If you wish to re-execute the complete training pipeline and evaluate the models:
+
+1. **(Optional) Re-download Dataset:**
 ```bash
-python gui_app.py
+python src/text_classifier/download_data.py
+
 ```
 
-### 4. (Optionnel) Tester le moteur seul, en ligne de commande
-```bash
-python nlp_engine.py
+
+2. **Run Model Training Notebook:**
+Open and execute all cells in `src/text_classifier/text_classification.ipynb`.
+
+This notebook performs:
+
+* **Exploratory Data Analysis (EDA):** Class distribution, text length distributions, and N-gram analysis.
+* **Text Preprocessing & Vectorization:** Cleaning text and extracting TF-IDF features (`TfidfVectorizer`).
+* **Model Evaluation:** Compares Multinomial Naive Bayes, Logistic Regression, Support Vector Machine (SVM), and Random Forest.
+* **Hyperparameter Tuning:** Evaluates cross-validation performance to select the best model.
+* **Artifact Export:** Exports the final model and vectorizer into `src/text_classifier/models/`.
+
 ```
-Affiche des exemples de distance de Levenshtein, de candidats Non-word et de
-détection contextuelle Real-word.
 
-## Choix techniques (à documenter dans le rapport)
-
-- **Nettoyage** : suppression des blocs LaTeX (`$...$`, `$$...$$`) avant
-  tokenisation, pour éviter que la syntaxe mathématique ne pollue le
-  vocabulaire scientifique.
-- **Seuil de fréquence minimale** : `Count >= 3` pour éliminer les
-  coquilles isolées des chercheurs dans le corpus brut.
-- **Distance de Levenshtein** : implémentation par programmation dynamique
-  (matrice complète conservée pour la traçabilité dans le rapport),
-  coûts uniformes (insertion = suppression = substitution = 1).
-- **Lissage Add-k (Laplace)** : `P(w2|w1) = (count(w1,w2)+k) / (count(w1)+k·V)`
-  avec `k = 1.0` et `V = 32 498` (taille du vocabulaire). Le seuil de
-  détection Real-word (`5e-5`) a été calibré empiriquement sur ce corpus —
-  voir les commentaires dans `nlp_engine.py` pour la justification.
-- **Filtrage bigrams** : les transitions ne sont comptées qu'à l'intérieur
-  d'un même titre ou d'un même résumé (jamais entre deux documents distincts).
-
-## Limites connues (à mentionner dans la section discussion du rapport)
-
-- Un mot Non-word suivi d'un mot valide peut provoquer une détection
-  Real-word "en cascade" sur le mot suivant (car le bigramme
-  `[mot_corrigé_implicite] -> [mot_suivant]` n'existe pas non plus). Ce
-  comportement est visible et peut être discuté comme piste d'amélioration
-  (ex: ignorer le contexte immédiatement après un Non-word détecté).
-- Le seuil `5e-5` est un hyperparamètre fixe ; une version plus avancée
-  pourrait le normaliser par mot (ex: percentile de la distribution des
-  probabilités de bigrammes pour ce mot précédent).
+```
